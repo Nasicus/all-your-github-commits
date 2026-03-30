@@ -3,11 +3,8 @@ import { RepoResult } from "./models";
 
 export const RepoLink: FC<{ repo: RepoResult }> = ({ repo }) => {
   return (
-    <a
-      href={`https://dev.azure.com/${repo.org}/${repo.project}/_git/${repo.name}`}
-      target="_blank"
-    >
-      {repo.name} ({repo.project})
+    <a href={repo.htmlUrl} target="_blank">
+      {repo.fullName}
     </a>
   );
 };

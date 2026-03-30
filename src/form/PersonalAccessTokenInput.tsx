@@ -1,4 +1,4 @@
-import { Checkbox, PasswordInput } from "@mantine/core";
+import { Anchor, Checkbox, PasswordInput } from "@mantine/core";
 import { FC, useContext, useEffect } from "react";
 import { SearchFormContext } from "./SearchFormProvider";
 
@@ -19,8 +19,19 @@ export const PersonalAccessTokenInput: FC = () => {
   return (
     <>
       <PasswordInput
-        placeholder="required permissions: Code - Read"
+        placeholder="GitHub PAT with repo scope"
         label="PAT"
+        description={
+          !pat && (
+            <Anchor
+              href="https://github.com/settings/tokens"
+              target="_blank"
+              size="xs"
+            >
+              Create a token on GitHub
+            </Anchor>
+          )
+        }
         value={pat}
         required
         onChange={(e) => setPat(e.target.value)}

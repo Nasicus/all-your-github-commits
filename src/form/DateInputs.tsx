@@ -10,18 +10,18 @@ export const DateInputs: FC = () => {
     <Flex gap="xs" align="stretch" mt="xs">
       <DateInput
         value={from}
-        onChange={setFrom}
+        onChange={(v) => setFrom(v || "")}
         label="From"
-        allowDeselect
-        placeholder="Will be from the start of the day (00:00)"
+        clearable
+        placeholder="Start date"
         w="100%"
       />
       <DateInput
         value={to}
-        onChange={setTo}
+        onChange={(v) => setTo(v || "")}
         label="To"
-        allowDeselect
-        placeholder="Will be to the end of the day (23:59)"
+        clearable
+        placeholder="End date"
         w="100%"
       />
     </Flex>

@@ -3,7 +3,7 @@ import { FC, useState } from "react";
 import { CommitList } from "./CommitList";
 import { CommitsPerMonthChart } from "./CommitsPerMonthChart";
 import { JsonCommitResult } from "./JsonCommitResult";
-import { Commit, FileChange, RepoResult } from "./models";
+import { Commit, RepoResult } from "./models";
 import { CommitsPerRepoChart } from "./CommitsPerRepoChart";
 
 export const ReposWithCommitsAccordionItem: FC<{ result: RepoResult[] }> = ({
@@ -18,31 +18,18 @@ export const ReposWithCommitsAccordionItem: FC<{ result: RepoResult[] }> = ({
 
   const allCommits = reposWithCommits.reduce<Commit[]>(
     (commits, r) => [...commits, ...r.commits],
-    []
-  );
-
-  const allFileChanges = allCommits.reduce<FileChange>(
-    (f, c) => {
-      f.add += c.fileChange.add;
-      f.edit += c.fileChange.edit;
-      f.delete += c.fileChange.delete;
-      return f;
-    },
-    { add: 0, edit: 0, delete: 0 }
+    [],
   );
 
   return (
     <Accordion.Item value="withCommits">
       <Accordion.Control>
-        {reposWithCommits.length} repos with {allCommits.length} commits (files:
-        +{allFileChanges.add.toLocaleString()}, ~
-        {allFileChanges.edit.toLocaleString()}, -
-        {allFileChanges.delete.toLocaleString()})
+        {reposWithCommits.length} repos with {allCommits.length} commits
       </Accordion.Control>
       <Accordion.Panel>
         <TextInput
           label="Filter"
-          placeholder="Repo name, commit message or commitId"
+          placeholder="Repo name, commit message or SHA"
           value={filter}
           onChange={(e) => setFilterValue(e.target.value)}
         />
@@ -58,7 +45,6 @@ export const ReposWithCommitsAccordionItem: FC<{ result: RepoResult[] }> = ({
           </Tabs.Panel>
           <Tabs.Panel value="JSON" pt="xs">
             <JsonCommitResult
-              fileChanges={allFileChanges}
               totalCommits={allCommits.length}
               commits={reposWithCommits}
             />
@@ -85,8 +71,8 @@ export const ReposWithCommitsAccordionItem: FC<{ result: RepoResult[] }> = ({
 
     const filteredCommits = repo.commits.filter(
       (c) =>
-        c.id.includes(lowerFilter) ||
-        c.message.toLowerCase().includes(lowerFilter)
+        c.sha.includes(lowerFilter) ||
+        c.message.toLowerCase().includes(lowerFilter),
     );
 
     if (!filteredCommits.length) {

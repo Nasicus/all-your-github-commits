@@ -1,8 +1,7 @@
 export interface RepoResult {
   name: string;
-  org: string;
-  project: string;
-  defaultBranch?: string;
+  fullName: string;
+  htmlUrl: string;
   commits: Commit[];
   errors: string[];
 }
@@ -10,17 +9,11 @@ export interface RepoResult {
 export interface Commit {
   date: Date;
   message: string;
-  id: string;
-  fileChange: FileChange;
-}
-
-export interface FileChange {
-  add: number;
-  delete: number;
-  edit: number;
+  sha: string;
+  htmlUrl: string;
 }
 
 export interface SearchProgress {
-  projects: { current: number; total: number };
-  repos: { current: number; total: number };
+  fetchedCount: number;
+  totalCount: number;
 }

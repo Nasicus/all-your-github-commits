@@ -32,13 +32,8 @@ const SearchProgressRenderer: FC<{ searchProgress: SearchProgress }> = ({
 
   return (
     <>
-      {searchProgress.projects.total > 1 && (
-        <>
-          {searchProgress.projects.current + 1}/{searchProgress.projects.total}{" "}
-          projects,{" "}
-        </>
-      )}
-      {searchProgress.repos.current}/{searchProgress.repos.total} repos
+      {searchProgress.fetchedCount} / {searchProgress.totalCount} commits
+      {searchProgress.totalCount > 1000 && " (GitHub limit: 1000)"}
     </>
   );
 };

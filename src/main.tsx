@@ -3,12 +3,14 @@ import ReactDOM from "react-dom/client";
 import { App } from "./App.tsx";
 import { MantineProvider } from "@mantine/core";
 import { GithubFork } from "./GithubFork.tsx";
+import "@mantine/core/styles.css";
+import "@mantine/dates/styles.css";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <MantineProvider withGlobalStyles withNormalizeCSS>
+    <MantineProvider>
       <App />
       <GithubFork />
     </MantineProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

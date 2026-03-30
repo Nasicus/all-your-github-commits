@@ -10,7 +10,7 @@ export const App: FC = () => {
 
   return (
     <Container>
-      <h1>Search for all commits of an author</h1>
+      <h1>GitHub Commit Search</h1>
       <SearchFormProvider>
         <SearchForm onRepoResultUpdate={setRepoResults} />
       </SearchFormProvider>

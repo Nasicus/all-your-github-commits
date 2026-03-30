@@ -1,6 +1,5 @@
 import { Accordion } from "@mantine/core";
 import { FC, Fragment } from "react";
-import { RepoLink } from "./RepoLink";
 import { RepoResult } from "./models";
 
 export const ReposWithErrorsAccordionItem: FC<{ result: RepoResult[] }> = ({
@@ -16,10 +15,8 @@ export const ReposWithErrorsAccordionItem: FC<{ result: RepoResult[] }> = ({
       <Accordion.Panel>
         <ul>
           {reposWithErrors.map((r) => (
-            <Fragment key={r.name}>
-              <li>
-                <RepoLink repo={r} />
-              </li>
+            <Fragment key={r.fullName}>
+              <li>{r.name}</li>
               <ul>
                 {r.errors.map((err, i) => (
                   <li key={i}>{err}</li>

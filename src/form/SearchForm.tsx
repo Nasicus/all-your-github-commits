@@ -1,17 +1,16 @@
 import { FC, useContext, useState } from "react";
-import { Commit, RepoResult, SearchProgress } from "../models";
+import { RepoResult, SearchProgress } from "../models";
 import { AuthorInput } from "./AuthorInput";
 import { DateInputs } from "./DateInputs";
 import { OrganizationInput } from "./OrganizationInput";
 import { PersonalAccessTokenInput } from "./PersonalAccessTokenInput";
-import { ProjectsInput } from "./ProjectsInput";
 import { SearchButton } from "./SearchButton";
 import { SearchFormContext } from "./SearchFormProvider";
 
 export const SearchForm: FC<{
   onRepoResultUpdate: (repoResult: RepoResult[]) => unknown;
 }> = ({ onRepoResultUpdate }) => {
-  const { organization, projects, pat, storePat, user, from, to } =
+  const { organization, pat, storePat, user, from, to } =
     useContext(SearchFormContext);
 
   const [isSearching, setIsSearching] = useState(false);
@@ -20,7 +19,6 @@ export const SearchForm: FC<{
   return (
     <>
       <OrganizationInput />
-      <ProjectsInput />
       <PersonalAccessTokenInput />
       <AuthorInput />
       <DateInputs />
@@ -41,147 +39,81 @@ export const SearchForm: FC<{
       localStorage.removeItem("pat");
     }
 
-    const result: RepoResult[] = [];
-    const progress: SearchProgress = {
-      projects: { total: projects.length, current: 0 },
-      repos: { total: 0, current: 0 },
-    };
+    let query = `author:${user} org:${organization}`;
+    if (from || to) {
+      query += ` author-date:${from || "*"}..${to || "*"}`;
+    }
 
-    for (const project of projects) {
-      try {
-        const reposResponse = await makeDevOpsRequest(
-          project,
-          "/git/repositories?api-version=7.0"
-        );
+    const repoMap = new Map<string, RepoResult>();
+    let page = 1;
+    const perPage = 100;
 
-        progress.repos.total += reposResponse.value.length;
-        setSearchProgress(progress);
+    try {
+      while (true) {
+        const url = `https://api.github.com/search/commits?q=${encodeURIComponent(query)}&per_page=${perPage}&page=${page}&sort=author-date&order=desc`;
 
-        for (const repo of reposResponse.value) {
-          const repoResult: RepoResult = {
-            name: repo.name,
-            org: organization,
-            project,
-            errors: [],
-            commits: [],
-          };
-          result.push(repoResult);
-
-          repoResult.defaultBranch = getDefaultBranch(repo);
-
-          if (!repoResult.defaultBranch) {
-            repoResult.errors.push("No default branch found");
-            continue;
-          }
-
-          const pageSize = 1000;
-          let skip = 0;
-          let commitPage: Commit[] = [];
-          while (skip === 0 || commitPage.length >= pageSize) {
-            try {
-              const commitsResponse = await makeDevOpsRequest(
-                project,
-                getCommitUrl(pageSize, skip, repoResult)
-              );
-
-              commitPage = commitsResponse.value.map((c: any) => ({
-                id: c.commitId,
-                message: c.comment,
-                date: new Date(c.author.date),
-                fileChange: {
-                  add: c.changeCounts.Add || 0,
-                  edit: c.changeCounts.Edit || 0,
-                  delete: c.changeCounts.Delete || 0,
-                },
-              }));
-
-              repoResult.commits = [...repoResult.commits, ...commitPage];
-              skip += pageSize;
-              progress.repos.current += 1;
-              setSearchProgress(progress);
-              onRepoResultUpdate([...result]);
-            } catch (err) {
-              const r: any = err;
-              repoResult.errors.push(
-                `${r.status}: ${(await r.json())?.message}`
-              );
-              progress.repos.current += 1;
-              setSearchProgress(progress);
-              onRepoResultUpdate([...result]);
-              break;
-            }
-          }
-        }
-      } catch (error) {
-        const r: any = error;
-        result.push({
-          commits: [],
-          errors: [`${r.status}: ${(await r.json())?.message}`],
-          defaultBranch: "unknown",
-          name: "Unknown",
-          org: organization,
-          project,
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${pat}`,
+            Accept: "application/vnd.github.v3+json",
+          },
         });
-        onRepoResultUpdate([...result]);
+
+        if (!response.ok) {
+          const errorBody = await response.json().catch(() => ({}));
+          throw new Error(
+            `${response.status}: ${errorBody.message || response.statusText}`,
+          );
+        }
+
+        const data = await response.json();
+
+        for (const item of data.items) {
+          const repoFullName = item.repository.full_name;
+          if (!repoMap.has(repoFullName)) {
+            repoMap.set(repoFullName, {
+              name: item.repository.name,
+              fullName: repoFullName,
+              htmlUrl: item.repository.html_url,
+              commits: [],
+              errors: [],
+            });
+          }
+          repoMap.get(repoFullName)!.commits.push({
+            sha: item.sha,
+            message: item.commit.message,
+            date: new Date(item.commit.author.date),
+            htmlUrl: item.html_url,
+          });
+        }
+
+        const currentResults = Array.from(repoMap.values());
+        setSearchProgress({
+          totalCount: data.total_count,
+          fetchedCount: currentResults.reduce(
+            (sum, r) => sum + r.commits.length,
+            0,
+          ),
+        });
+        onRepoResultUpdate([...currentResults]);
+
+        if (data.items.length < perPage || page * perPage >= 1000) {
+          break;
+        }
+        page++;
       }
-      progress.projects.current += 1;
-      setSearchProgress(progress);
+    } catch (error: any) {
+      const currentResults = Array.from(repoMap.values());
+      currentResults.push({
+        name: "Search Error",
+        fullName: "error",
+        htmlUrl: "",
+        commits: [],
+        errors: [error.message || String(error)],
+      });
+      onRepoResultUpdate(currentResults);
     }
 
     setIsSearching(false);
-    onRepoResultUpdate([...result]);
-  }
-
-  function getDefaultBranch(repo: any) {
-    const defaultBranchPaths = repo.defaultBranch?.split("/");
-    if (!defaultBranchPaths) {
-      return null;
-    }
-
-    // remove refs/heads
-    return defaultBranchPaths.slice(2).join("/");
-  }
-
-  function getCommitUrl(pageSize: number, skip: number, repo: RepoResult) {
-    let commitUrl = `/git/repositories/${
-      repo.name
-    }/commits?searchCriteria.author=${user}&searchCriteria.$top=${pageSize}&searchCriteria.$skip=${skip}&searchCriteria.itemVersion.version=${encodeURIComponent(
-      repo.defaultBranch
-    )}&api-version=7.0`;
-
-    if (from) {
-      commitUrl += `&searchCriteria.fromDate=${toUtcDate(from).toISOString()}`;
-    }
-
-    if (to) {
-      const utcTo = toUtcDate(to);
-      utcTo.setUTCHours(23, 59, 59, 999);
-      commitUrl += `&searchCriteria.toDate=${utcTo.toISOString()}`;
-    }
-
-    return commitUrl;
-  }
-
-  function makeDevOpsRequest(project: string, path: string) {
-    return fetch(
-      `https://dev.azure.com/${organization}/${project}/_apis${path}`,
-      {
-        headers: { Authorization: `Basic ${btoa(`:${pat}`)}` },
-      }
-    ).then((r) => {
-      if (r.ok) {
-        return r.json();
-      }
-
-      return Promise.reject(r);
-    });
   }
 };
-
-function toUtcDate(date: Date) {
-  if (!date) {
-    return date;
-  }
-
-  return new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-}

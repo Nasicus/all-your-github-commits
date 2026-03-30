@@ -6,17 +6,14 @@ export const CommitList: FC<{ commits: RepoResult[] }> = ({ commits }) => {
   return (
     <ul>
       {commits.map((r) => (
-        <li key={r.name}>
-          <RepoLink repo={r} /> ({r.defaultBranch})
+        <li key={r.fullName}>
+          <RepoLink repo={r} />
           <ul>
             {r.commits.map((c) => (
-              <li key={c.id}>
+              <li key={c.sha}>
                 {c.date.toISOString()}: {c.message} (
-                <a
-                  href={`https://dev.azure.com/${r.org}/${r.project}/_git/${r.name}/commit/${c.id}`}
-                  target="_blank"
-                >
-                  {c.id}
+                <a href={c.htmlUrl} target="_blank">
+                  {c.sha.substring(0, 7)}
                 </a>
                 )
               </li>

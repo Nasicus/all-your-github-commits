@@ -7,8 +7,8 @@ export const AuthorInput: FC = () => {
 
   return (
     <TextInput
-      placeholder="e.g. Josef Müller"
-      label="User to search for"
+      placeholder="GitHub username or git author name"
+      label="Author"
       value={user}
       required
       onChange={(e) => setUser(e.target.value)}
