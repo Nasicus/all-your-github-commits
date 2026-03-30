@@ -1,9 +1,16 @@
 import { TextInput } from "@mantine/core";
-import { FC, useContext } from "react";
+import { FC, useContext, useEffect } from "react";
 import { SearchFormContext } from "./SearchFormProvider";
 
 export const AuthorInput: FC = () => {
   const { user, setUser } = useContext(SearchFormContext);
+
+  useEffect(() => {
+    const fromStorage = localStorage.getItem("user");
+    if (fromStorage) {
+      setUser(fromStorage);
+    }
+  }, [setUser]);
 
   return (
     <TextInput

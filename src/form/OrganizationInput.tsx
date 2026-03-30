@@ -6,7 +6,13 @@ export const OrganizationInput: FC = () => {
   const { organization, setOrganization } = useContext(SearchFormContext);
 
   useEffect(() => {
-    setOrganization(getOrganizationFromQuery());
+    const fromQuery = new URLSearchParams(window.location.search).get("org");
+    const fromStorage = localStorage.getItem("organization");
+    if (fromQuery) {
+      setOrganization(fromQuery);
+    } else if (fromStorage) {
+      setOrganization(fromStorage);
+    }
   }, [setOrganization]);
 
   return (
@@ -18,12 +24,4 @@ export const OrganizationInput: FC = () => {
       onChange={(e) => setOrganization(e.target.value)}
     />
   );
-
-  function getOrganizationFromQuery() {
-    const urlSearchParams = Object.fromEntries(
-      new URLSearchParams(window.location.search).entries()
-    );
-
-    return urlSearchParams["org"] || "";
-  }
 };

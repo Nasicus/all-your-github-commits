@@ -39,6 +39,9 @@ export const SearchForm: FC<{
       localStorage.removeItem("pat");
     }
 
+    localStorage.setItem("organization", organization);
+    localStorage.setItem("user", user);
+
     let query = `author:${user} org:${organization}`;
     if (from || to) {
       query += ` author-date:${from || "*"}..${to || "*"}`;
