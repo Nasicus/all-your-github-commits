@@ -2,7 +2,6 @@ import { Accordion } from "@mantine/core";
 import { FC } from "react";
 import { ReposWithCommitsAccordionItem } from "./ReposWithCommitsAccordionItem";
 import { RepoResult } from "./models";
-import { ReposWithErrorsAccordionItem } from "./ReposWithErrorsAccordionItem";
 
 export const ResultAccordion: FC<{ result: RepoResult[] }> = ({ result }) => {
   if (!result) {
@@ -12,7 +11,6 @@ export const ResultAccordion: FC<{ result: RepoResult[] }> = ({ result }) => {
   return (
     <Accordion defaultValue="withCommits">
       <ReposWithCommitsAccordionItem result={result} />
-      <ReposWithErrorsAccordionItem result={result} />
     </Accordion>
   );
 };

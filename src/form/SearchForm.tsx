@@ -9,7 +9,8 @@ import { SearchFormContext } from "./SearchFormProvider";
 
 export const SearchForm: FC<{
   onRepoResultUpdate: (repoResult: RepoResult[]) => unknown;
-}> = ({ onRepoResultUpdate }) => {
+  onError: (error: string | null) => unknown;
+}> = ({ onRepoResultUpdate, onError }) => {
   const { organization, pat, storePat, user, from, to } =
     useContext(SearchFormContext);
 
@@ -51,6 +52,8 @@ export const SearchForm: FC<{
     let page = 1;
     const perPage = 100;
 
+    onError(null);
+
     try {
       while (true) {
         const url = `https://api.github.com/search/commits?q=${encodeURIComponent(query)}&per_page=${perPage}&page=${page}&sort=author-date&order=desc`;
@@ -79,7 +82,6 @@ export const SearchForm: FC<{
               fullName: repoFullName,
               htmlUrl: item.repository.html_url,
               commits: [],
-              errors: [],
             });
           }
           repoMap.get(repoFullName)!.commits.push({
@@ -106,15 +108,8 @@ export const SearchForm: FC<{
         page++;
       }
     } catch (error: any) {
-      const currentResults = Array.from(repoMap.values());
-      currentResults.push({
-        name: "Search Error",
-        fullName: "error",
-        htmlUrl: "",
-        commits: [],
-        errors: [error.message || String(error)],
-      });
-      onRepoResultUpdate(currentResults);
+      onRepoResultUpdate(Array.from(repoMap.values()));
+      onError(error.message || String(error));
     }
 
     setIsSearching(false);

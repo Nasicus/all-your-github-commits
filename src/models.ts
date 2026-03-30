@@ -3,7 +3,6 @@ export interface RepoResult {
   fullName: string;
   htmlUrl: string;
   commits: Commit[];
-  errors: string[];
 }
 
 export interface Commit {
