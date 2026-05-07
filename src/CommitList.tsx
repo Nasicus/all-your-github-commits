@@ -11,7 +11,11 @@ export const CommitList: FC<{ commits: RepoResult[] }> = ({ commits }) => {
           <ul>
             {r.commits.map((c) => (
               <li key={c.sha}>
-                {c.date.toISOString()}: {c.message} (
+                {c.date.toISOString()}:{" "}
+                {c.message.length > 100
+                  ? c.message.slice(0, 100) + "…"
+                  : c.message}{" "}
+                (
                 <a href={c.htmlUrl} target="_blank">
                   {c.sha.substring(0, 7)}
                 </a>
